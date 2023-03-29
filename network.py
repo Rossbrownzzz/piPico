@@ -2,8 +2,9 @@ import random
 random.seed(123)
 
 class Network:
-    def __init__(self, numLayers=4, inputDim=11, outputDim=9, learningRate=0.08, lrDecay=0.0001, momentum=0.6, momentumDecay = 0.01, initialWeightsMax=0.15, trainBatchSize=1):
+    def __init__(self, numLayers=4, layerDim=[15,14,13,12], inputDim=11, outputDim=9, learningRate=0.08, lrDecay=0.0001, momentum=0.6, momentumDecay = 0.01, initialWeightsMax=0.15, trainBatchSize=1):
         self.numLayers = numLayers
+        self.layerDim = layerDim
         self.inputDim = inputDim
         self.outputDim = outputDim
         self.learningRate = learningRate
@@ -13,11 +14,12 @@ class Network:
         self.initialWeightsMax = initialWeightsMax
         self.trainBatchSize = trainBatchSize
 
+        #create and link layers
         self.inputLayer = Layer(layerNodes=inputDim)
         self.outputLayer = Layer(layerNodes=outputDim)
         self.layers = []
         for i in range(numLayers):
-            self.layers.append(Layer())
+            self.layers.append(Layer(layerNodes=self.layerDim[i]))
 
         self.inputLayer.link(previous=None, next=self.layers[0])
         for i in range(numLayers):
@@ -29,7 +31,7 @@ class Network:
                 layer.link(previous=self.layers[i-1], next=self.outputLayer)
             else:
                 layer.link(previous=self.layers[i-1], next=self.layers[i+1])
-        
+
         self.outputLayer.link(previous=self.layers[numLayers-1], next=None)
 
 
@@ -49,6 +51,9 @@ class Network:
                 self.backPropogate(losses, moveMade)
 
 
+    ###### TODO try setting another neural network as the board state judge. make it regression rather than classification, and use the prospective increase or decrease in
+    ###### board state value to get loss from every output, rather than just the move made.
+    ###### train the regression network on board states encountered and whether it wound up being a win or a lose for that side.
     def loss(self, pred, result):
         # if won, it should have been higher
         if result == 1:
@@ -100,7 +105,6 @@ class Layer:
             self.outputWeights = [[random.randint(1,100)/100 * self.initialWeightsMax for i in range(self.layerNodes)] for j in range(self.nextLayerNodes)]
             #self.outputBias = [random.randint(1,100)/100 * initialWeightsMax for i in range(outputNodes)]
        
-
 
     def activations(self, inputs):
         outputValue = [0]*self.layerNodes
