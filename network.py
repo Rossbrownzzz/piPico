@@ -2,7 +2,7 @@ import random
 random.seed(123)
 
 class Network:
-    def __init__(self, numLayers=4, layerDim=[15,13,14,12], inputDim=11, outputDim=9, learningRate=0.1, lrDecay=0.00001, \
+    def __init__(self, numLayers=4, layerDim=[15,13,14,12], inputDim=11, outputDim=9, learningRate=0.01, lrDecay=0.00001, \
                  momentum=0.6, momentumDecay = 0.01, initialWeightsMax=0.15, trainBatchSize=1):
         self.numLayers = numLayers
         self.layerDim = layerDim
@@ -76,25 +76,48 @@ class Network:
             deltas[0].append(error[outNode] * activations[0][outNode] * (1-activations[0][outNode]))
         i = 1
         #print('DELTAS 0', deltas[0])
-        for layer in self.layers[::-1]:
-            #print(layer.hiddenWeights)
-            delta = []
-            for j in range(len(activations[i])):
-                #print('-------act', activations[i])
+        for layer in self.layers[::-1]:     
+            
+            '''
+            initial =[]
+            for lrre in range(len(layer.hiddenWeights)):
+                chng = []
+                for nde in range(len(layer.hiddenWeights[lrre])):
+                    chng.append(layer.hiddenWeights[lrre][nde])
+                initial.append(chng)
+
+            print('initial', initial)'''
+
+            delta = []        
+            for prevDelta in deltas[i-1]:
                 D = 0
-                for prevDelta in deltas[i-1]:
+                for j in range(len(activations[i])):
+                    #print('-------act', activations[i])
                     D += activations[i][j] * prevDelta
-                D = D * activations[i][j] * (1 - activations[i][j]) 
+                    #print('act, i j, prevdelta ', activations[i][j], i, j, prevDelta)
+                D = D * activations[i][j] * (1 - activations[i][j])
+                #print('d', D) 
+                #print(activations[i][j] * (1 - activations[i][j]))
                 delta.append(D)
+            #print('ndelta', delta)
             deltas.append(delta)
-            #print(deltas)
             for j in range((len(activations[i]))):
                 for node in range(len(layer.hiddenWeights[j])):
                     #print(layer.hiddenWeights[j][node])
-                    layer.hiddenWeights[j][node] += -activations[i][j] * deltas[i][j] * self.learningRate
-                    #print('activ, delta, lr', -activations[i][j], deltas[i][j], self.learningRate)
-            #print("new", layer.hiddenWeights)
+                    layer.hiddenWeights[j][node] += -activations[j][node] * deltas[j][node] * self.learningRate
+                    #print('weight, activ, delta, lr', layer.hiddenWeights[j][node], -activations[j][node], deltas[j][node], self.learningRate)
+            
+            '''print("new", layer.hiddenWeights)
+            changes = []
+            for lrre in range(len(layer.hiddenWeights)):
+                chng = []
+                for nde in range(len(layer.hiddenWeights[lrre])):
+                    chng.append(layer.hiddenWeights[lrre][nde] - initial[lrre][nde])
+                changes.append(chng)
+            print(changes)'''
             i += 1 
+        #print('deltas', deltas)
+        
 
 
 
@@ -132,12 +155,12 @@ test = Network(inputDim=2, numLayers=2, layerDim=[2,2], outputDim=2)
 prev = test.predict([1,0])#[0,1,1,1,1,0,1,0,1,1,0,1])
 print(prev)
 
-for i in range(100):
+for i in range(1):
     test.train([[[1,0],[10,0]]])
     #test.train([[[0,1,1,1,1,0,1,0,1,1,0,1], [1, 0]]])
     curr = test.predict([1,0])
     #curr = test.predict([0,1,1,1,1,0,1,0,1,1,0,1])
     #print(curr)
-    print(curr[0]-prev[0], curr[1]-prev[1])
+    #print(curr[0]-prev[0], curr[1]-prev[1])
     prev=curr
 print(curr)
